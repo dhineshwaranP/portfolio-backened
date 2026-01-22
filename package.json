@@ -6,9 +6,11 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "railway:deploy": "railway up",
+    "railway:logs": "railway logs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["portfolio", "contact-form", "nodejs", "express", "resend"],
+  "keywords": ["portfolio", "contact-form", "nodejs", "express", "resend", "railway"],
   "author": "Dhineshwaran P",
   "license": "MIT",
   "dependencies": {
@@ -21,6 +23,6 @@
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
