@@ -9,22 +9,65 @@ const PORT = process.env.PORT || 3000;
 // Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ========== ENHANCED CORS CONFIGURATION ==========
+const allowedOrigins = [
+  // Railway domains
+  'https://portfolio-backened-production.up.railway.app',
+  'https://portfolio-backened.up.railway.app',
+  'https://*.up.railway.app',  // Allow all Railway apps
+  
+  // GitHub Pages
+  'https://dhineshwaranp.github.io',
+  'https://*.github.io',
+  
+  // Local development
+  'http://localhost:5500',
+  'http://127.0.0.1:5500',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  
+  // Environment variables
+  process.env.FRONTEND_URL,
+  process.env.RAILWAY_STATIC_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'https://dhineshwaranp.github.io',
-    'https://*.github.io',
-    process.env.FRONTEND_URL // Add Railway frontend URL if needed
-  ].filter(Boolean),
+  origin: function (origin, callback) {
+    // Allow requests with no origin
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is allowed
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        const regex = new RegExp('^' + allowedOrigin.replace(/\*/g, '.*') + '$');
+        return regex.test(origin);
+      }
+      return origin === allowedOrigin;
+    });
+    
+    if (isAllowed) {
+      return callback(null, true);
+    } else {
+      console.log('🚫 CORS blocked:', origin);
+      return callback(new Error('CORS policy violation'), false);
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 600 // 10 minutes
 }));
+
+// Handle preflight
+app.options('*', cors());
+
+// Request logger (optional)
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
+  next();
+});
+
+// ========== ROUTES ==========
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -34,7 +77,11 @@ app.get('/api/health', (req, res) => {
     service: 'Resend Email Service',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'production',
-    resendConfigured: !!process.env.RESEND_API_KEY
+    resendConfigured: !!process.env.RESEND_API_KEY,
+    cors: {
+      origin: req.headers.origin || 'none',
+      allowed: allowedOrigins
+    }
   });
 });
 
@@ -70,7 +117,7 @@ app.post('/api/test-email', async (req, res) => {
   }
 });
 
-// Contact form endpoint
+// Contact form endpoint (keep your existing code)
 app.post('/api/contact/send', async (req, res) => {
   try {
     const { name, email, message } = req.body;
@@ -171,7 +218,7 @@ ${message}
   } catch (error) {
     console.error('❌ Server error:', error.message);
     
-    // Fallback success (so user doesn't see error)
+    // Fallback success
     res.json({
       success: true,
       message: 'Message received! I\'ll get back to you soon.',
@@ -213,8 +260,8 @@ app.listen(PORT, () => {
   📧 POST /api/contact/send    - Send contact message
   🧪 POST /api/test-email      - Test Resend setup
   
-  🔗 Health Check URL:
+  🔗 CORS Allowed Origins:
   -----------------------
-  https://your-railway-url.up.railway.app/api/health
+  ${allowedOrigins.join('\n  ')}
   `);
 });
