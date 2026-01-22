@@ -11,15 +11,19 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
+    'http://localhost:3000',
     'https://dhineshwaranp.github.io',
-    'https://*.github.io'
-  ],
+    'https://*.github.io',
+    process.env.FRONTEND_URL // Add Railway frontend URL if needed
+  ].filter(Boolean),
   credentials: true,
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Health check
@@ -29,8 +33,41 @@ app.get('/api/health', (req, res) => {
     message: 'Portfolio Backend API is running on Railway',
     service: 'Resend Email Service',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production'
+    environment: process.env.NODE_ENV || 'production',
+    resendConfigured: !!process.env.RESEND_API_KEY
   });
+});
+
+// Test Resend endpoint
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Test <onboarding@resend.dev>',
+      to: process.env.TO_EMAIL || 'apkpdhinesh2005@gmail.com',
+      subject: 'Test Email from Railway + Resend',
+      html: '<h1>Test successful! 🎉</h1><p>Your Resend + Railway setup is working.</p>'
+    });
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send test email',
+        error: error.message
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Test email sent successfully',
+      emailId: data?.id
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
 });
 
 // Contact form endpoint
@@ -63,7 +100,7 @@ app.post('/api/contact/send', async (req, res) => {
     // Send email via Resend
     const { data, error } = await resend.emails.send({
       from: 'Portfolio Contact <onboarding@resend.dev>',
-      to: ['apkpdhinesh2005@gmail.com'],
+      to: [process.env.TO_EMAIL || 'apkpdhinesh2005@gmail.com'],
       replyTo: email,
       subject: `New Portfolio Message: ${name}`,
       html: `
@@ -127,7 +164,8 @@ ${message}
     res.json({
       success: true,
       message: 'Message sent successfully! I\'ll get back to you soon.',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      emailId: data?.id
     });
 
   } catch (error) {
@@ -167,14 +205,16 @@ app.listen(PORT, () => {
   📧 Email Service: Resend.com
   ✅ Status: Ready
   ⏰ Started: ${new Date().toLocaleString()}
+  🔐 Resend API: ${process.env.RESEND_API_KEY ? 'Configured ✅' : 'Missing ❌'}
   
   📊 Available Endpoints:
   ----------------------
   ✅ GET  /api/health          - Health check
   📧 POST /api/contact/send    - Send contact message
+  🧪 POST /api/test-email      - Test Resend setup
   
-  🔗 Frontend URL to use:
+  🔗 Health Check URL:
   -----------------------
-  https://your-railway-url.up.railway.app/api/contact/send
+  https://your-railway-url.up.railway.app/api/health
   `);
 });
