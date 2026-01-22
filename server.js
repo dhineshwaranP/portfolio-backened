@@ -32,19 +32,26 @@ const contactLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Create Nodemailer transporter
+// Create Nodemailer transporter with Render-compatible settings
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
+  },
+  connectionTimeout: 10000,
+  tls: {
+    rejectUnauthorized: false
   }
 });
 
 // Test email configuration on startup
 transporter.verify((error, success) => {
   if (error) {
-    console.error('❌ Email configuration error:', error);
+    console.error('❌ Email configuration error:', error.message);
+    console.log('ℹ️ Trying to proceed anyway...');
   } else {
     console.log('✅ Email server is ready to send messages');
   }
@@ -247,6 +254,9 @@ app.post('/api/contact/send', contactLimiter, async (req, res) => {
     } else if (error.code === 'EENVELOPE') {
       errorMessage = 'Invalid email address. Please check your email and try again.';
       statusCode = 400;
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = 'Connection timeout. Please try again in a moment.';
+      statusCode = 504;
     }
 
     res.status(statusCode).json({
@@ -299,5 +309,6 @@ app.listen(PORT, () => {
   From: ${process.env.GMAIL_USER || 'Not configured'}
   To: ${process.env.TO_EMAIL || 'apkpdhinesh2005@gmail.com'}
   Status: ${process.env.GMAIL_USER ? 'Configured' : '⚠️ Not configured'}
+  SMTP: smtp.gmail.com:587 (Render-compatible)
   `);
 });
