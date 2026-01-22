@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
@@ -20,30 +19,19 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Rate limiting to prevent spam
-const contactLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests. Please try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false
-});
+// TEMPORARY: Disabled rate limiting to fix error
+const contactLimiter = (req, res, next) => {
+  next(); // Skip rate limiting for now
+};
 
-// Create Nodemailer transporter with Render-compatible settings
+// Create Nodemailer transporter - USING PORT 465
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
-  },
-  connectionTimeout: 10000,
-  tls: {
-    rejectUnauthorized: false
   }
 });
 
@@ -51,7 +39,7 @@ const transporter = nodemailer.createTransport({
 transporter.verify((error, success) => {
   if (error) {
     console.error('❌ Email configuration error:', error.message);
-    console.log('ℹ️ Trying to proceed anyway...');
+    console.log('ℹ️ Trying port 465 with SSL...');
   } else {
     console.log('✅ Email server is ready to send messages');
   }
@@ -309,6 +297,7 @@ app.listen(PORT, () => {
   From: ${process.env.GMAIL_USER || 'Not configured'}
   To: ${process.env.TO_EMAIL || 'apkpdhinesh2005@gmail.com'}
   Status: ${process.env.GMAIL_USER ? 'Configured' : '⚠️ Not configured'}
-  SMTP: smtp.gmail.com:587 (Render-compatible)
+  SMTP: smtp.gmail.com:465 (SSL - Render compatible)
+  Rate Limiting: Disabled temporarily
   `);
 });
