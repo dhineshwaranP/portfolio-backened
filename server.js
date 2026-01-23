@@ -7,27 +7,57 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// ===== UPDATED CORS CONFIGURATION =====
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'https://localhost:3000',
+      'https://dhineshwaranp.github.io',
+      'https://portfolio-backened-production-3a16.up.railway.app',
+      'https://*.github.io'
+    ];
+    
+    // Check if origin matches allowed list
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (allowedOrigin.includes('*')) {
+        const domain = allowedOrigin.replace('*.', '');
+        return origin.endsWith(domain);
+      }
+      return origin === allowedOrigin;
+    });
+    
+    if (isAllowed || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      console.log('❌ CORS blocked origin:', origin);
+      callback(new Error(`CORS policy: Origin ${origin} not allowed`), false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS
+app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Railway CORS - Allow all GitHub Pages and your frontend
-app.use(cors({
-  origin: [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'https://dhineshwaranp.github.io',
-    'https://*.github.io'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type']
-}));
-
 // Request logging for Railway
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'unknown'}`);
   next();
 });
 
@@ -110,19 +140,31 @@ Time: ${timestamp}
   };
 };
 
-// Health check
+// Health check with CORS headers
 app.get('/api/health', (req, res) => {
+  // Add CORS headers manually for extra safety
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
   res.json({
     success: true,
     message: 'API Running on Railway',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production'
+    environment: process.env.NODE_ENV || 'production',
+    allowedOrigins: [
+      'https://dhineshwaranp.github.io',
+      'https://*.github.io'
+    ]
   });
 });
 
 // Contact endpoint
 app.post('/api/contact/send', contactLimiter, async (req, res) => {
   try {
+    // Add CORS headers for response
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
     const { name, email, message } = req.body;
     
     const errors = validateContactForm(name, email, message);
@@ -143,7 +185,7 @@ app.post('/api/contact/send', contactLimiter, async (req, res) => {
 
     await transporter.sendMail(mailOptions);
     
-    console.log(`✅ Railway Email Sent: ${email}`);
+    console.log(`✅ Railway Email Sent: ${email} from origin: ${req.headers.origin || 'unknown'}`);
     
     res.json({
       success: true,
@@ -193,5 +235,9 @@ app.listen(PORT, () => {
 ✅ Contact: /api/contact/send
 ✅ Node: ${process.version}
 ✅ Time: ${new Date().toLocaleString()}
+✅ CORS Enabled for:
+   - https://dhineshwaranp.github.io
+   - https://*.github.io
+   - https://portfolio-backened-production-3a16.up.railway.app
 `);
 });
