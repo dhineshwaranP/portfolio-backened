@@ -1,18 +1,21 @@
 {
   "name": "portfolio-backend",
-  "version": "1.1.0",
-  "description": "Railway-deployed backend for portfolio contact form",
+  "version": "2.0.0",
+  "description": "Production-ready backend for Dhineshwaran's portfolio contact form - Deployed on Railway",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "railway:deploy": "echo 'Deploying to Railway...'"
+    "test": "echo \"No tests specified\" && exit 0",
+    "railway:deploy": "echo \"Deploying to Railway...\""
   },
   "keywords": [
     "portfolio",
+    "backend",
     "railway",
     "contact-form",
-    "email"
+    "email",
+    "api"
   ],
   "author": "Dhineshwaran P",
   "license": "MIT",
@@ -29,5 +32,9 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dhineshwaranp/portfolio-backend"
   }
 }
