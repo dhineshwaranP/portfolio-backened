@@ -1,28 +1,33 @@
 {
   "name": "portfolio-backend",
-  "version": "1.0.0",
-  "description": "Backend API for Dhineshwaran's Portfolio Contact Form with Resend",
+  "version": "1.1.0",
+  "description": "Railway-deployed backend for portfolio contact form",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "railway:deploy": "railway up",
-    "railway:logs": "railway logs",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "railway:deploy": "echo 'Deploying to Railway...'"
   },
-  "keywords": ["portfolio", "contact-form", "nodejs", "express", "resend", "railway"],
+  "keywords": [
+    "portfolio",
+    "railway",
+    "contact-form",
+    "email"
+  ],
   "author": "Dhineshwaran P",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "resend": "^3.0.0"
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.10.0",
+    "nodemailer": "^6.9.4"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   }
 }
