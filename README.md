@@ -1,31 +1,29 @@
-# Portfolio Backend - Contact Form API
+# Portfolio Backend - Railway Deployment
 
-Backend server for handling contact form submissions from Dhineshwaran's portfolio website.
+Live backend for Dhineshwaran's portfolio contact form, deployed on Railway.
 
-## Features
-- ✅ Email notifications via Gmail SMTP
-- ✅ Input validation & sanitization
-- ✅ Rate limiting (10 requests/15 minutes)
-- ✅ CORS security
-- ✅ Health check endpoint
-- ✅ HTML & plain text email templates
-- ✅ Error handling & logging
+## 🚀 Quick Deploy to Railway
 
-## Quick Start
+### Method 1: One-Click Deploy
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/zkBc8p?referralCode=portfolio)
 
-### 1. Prerequisites
-- Node.js 16+
-- Gmail account with 2FA enabled
+### Method 2: Manual Deploy
+1. **Push these 4 files to GitHub:**
+   - `server.js`
+   - `package.json`
+   - `.env.example`
+   - `.gitignore`
 
-### 2. Setup
-```bash
-# Clone/Download the backend files
-mkdir portfolio-backend
-cd portfolio-backend
+2. **On Railway.app:**
+   - New Project → Deploy from GitHub
+   - Select your repo
+   - Add these environment variables:
+     ```
+     GMAIL_USER = apkpdhinesh2005@gmail.com
+     GMAIL_APP_PASSWORD = zmiq oeqs epbx bsmp
+     TO_EMAIL = apkpdhinesh2005@gmail.com
+     NODE_ENV = production
+     ```
+   - Click Deploy
 
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your Gmail credentials
+## 📁 Required Files
